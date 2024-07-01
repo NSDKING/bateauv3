@@ -1,19 +1,19 @@
 {
   "staging": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-dashboard-staging-e8e01-authRole",
-      "UnauthRoleArn": "arn:aws:iam::458211071259:role/amplify-dashboard-staging-e8e01-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::458211071259:role/amplify-dashboard-staging-e8e01-authRole",
+      "AuthRoleName": "amplify-dashboardv1-staging-ba2ed-authRole",
+      "UnauthRoleArn": "arn:aws:iam::458211071259:role/amplify-dashboardv1-staging-ba2ed-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::458211071259:role/amplify-dashboardv1-staging-ba2ed-authRole",
       "Region": "us-east-1",
-      "DeploymentBucketName": "amplify-dashboard-staging-e8e01-deployment",
-      "UnauthRoleName": "amplify-dashboard-staging-e8e01-unauthRole",
-      "StackName": "amplify-dashboard-staging-e8e01",
-      "StackId": "arn:aws:cloudformation:us-east-1:458211071259:stack/amplify-dashboard-staging-e8e01/9cd4eb30-3722-11ef-8745-12e0a9a2bbeb",
-      "AmplifyAppId": "d1gxzgz1z8v98b"
+      "DeploymentBucketName": "amplify-dashboardv1-staging-ba2ed-deployment",
+      "UnauthRoleName": "amplify-dashboardv1-staging-ba2ed-unauthRole",
+      "StackName": "amplify-dashboardv1-staging-ba2ed",
+      "StackId": "arn:aws:cloudformation:us-east-1:458211071259:stack/amplify-dashboardv1-staging-ba2ed/b001ac30-376c-11ef-a6d4-0afff5896401",
+      "AmplifyAppId": "d1rlzyxmn3yb6b"
     },
     "categories": {
       "auth": {
-        "dashboard": {}
+        "dashboardv1": {}
       }
     }
   }

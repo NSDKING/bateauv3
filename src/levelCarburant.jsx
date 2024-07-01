@@ -35,7 +35,7 @@ const CarburantsPage = () => {
             <tr>
               <th className="py-2 px-4 border-b">ID</th>
               <th className="py-2 px-4 border-b">Level</th>
-              <th className="py-2 px-4 border-b">date</th>
+              <th className="py-2 px-4 border-b">date </th>
              </tr>
           </thead>
           <tbody>

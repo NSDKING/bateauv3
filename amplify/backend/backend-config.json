@@ -1,6 +1,6 @@
 {
   "api": {
-    "dashboard": {
+    "dashboardv1": {
       "dependsOn": [],
       "output": {
         "authConfig": {
@@ -23,7 +23,7 @@
     }
   },
   "auth": {
-    "dashboard": {
+    "dashboardv1": {
       "customAuth": false,
       "dependsOn": [],
       "frontendAuthConfig": {
