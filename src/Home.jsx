@@ -31,16 +31,15 @@ export default function Home() {
   useEffect(() => {
     if (data) {
       saveCarburantLevelDaily();
+      console.log(data)
+
     }
   }, [data]);
 
   const fetchData = async () => {
     try {
-      console.log('fetchData called');
       const apiEndpoint = `https://${server_address}/external/api/getAll?token=${token}`;
-      console.log('API Endpoint:', apiEndpoint);
       const response = await axios.get(apiEndpoint);
-      console.log(response.data);
       setData(response.data);
       setIsLoading(false);
     } catch (error) {
@@ -73,25 +72,24 @@ export default function Home() {
   };
 
   const saveCarburantLevelDaily = async () => {
-    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
+    const currentDate = new Date().toISOString().split('T')[0];  
     const savedData = JSON.parse(localStorage.getItem('carburantLevels')) || [];
-
-    // Check if we have already saved data for the current date
+     // Check if we have already saved data for the current date
     const alreadySaved = savedData.some(entry => entry.date === currentDate);
 
     if (!alreadySaved) {
-      const newEntry = { date: currentDate, level: FuelLevel };
+      const newEntry = { level: FuelLevel };
       savedData.push(newEntry);
       localStorage.setItem('carburantLevels', JSON.stringify(savedData));
       console.log('Carburant level saved:', newEntry);
+      console.log('start')
 
       // Save to backend
       try {
         const result = await API.graphql(graphqlOperation(createCarburants, {
           input: {
             level: FuelLevel,
-            createdAt: new Date().toISOString()
-          }
+           }
         }));
         console.log('Carburant level saved to backend:', result);
       } catch (error) {
@@ -115,7 +113,7 @@ export default function Home() {
             <div className="flex justify-around p-4">
               <div className="w-1/2 bg-gray-300 h-64 relative mr-2" onClick={() => navigate('/carburants')}>
                 <div className="bg-blue-500 absolute bottom-0" style={{ height: `${FuelLevel}%`, width: '100%' }} />
-                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Fuel Level: {FuelLevel.toFixed(2)}%</p>
+                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Fuel Level: {FuelLevel.toFixed(2)/100*19.23}</p>
               </div>
               <div className="w-1/2 bg-gray-300 h-64 relative mx-2">
                 <div className="bg-red-500 absolute bottom-0" style={{ height: `${tempLevel}%`, width: '100%' }} />
