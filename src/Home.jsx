@@ -113,7 +113,8 @@ export default function Home() {
             <div className="flex justify-around p-4">
               <div className="w-1/2 bg-gray-300 h-64 relative mr-2" onClick={() => navigate('/carburants')}>
                 <div className="bg-blue-500 absolute bottom-0" style={{ height: `${FuelLevel}%`, width: '100%' }} />
-                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Fuel Level: {FuelLevel.toFixed(2)/100*19.23}</p>
+                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Fuel Level:{(FuelLevel.toFixed(2) / 100 * 19.23).toFixed(3)}
+                </p>
               </div>
               <div className="w-1/2 bg-gray-300 h-64 relative mx-2">
                 <div className="bg-red-500 absolute bottom-0" style={{ height: `${tempLevel}%`, width: '100%' }} />
