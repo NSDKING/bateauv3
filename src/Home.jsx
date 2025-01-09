@@ -4,6 +4,11 @@ import axios from 'axios';
 import tankImage from './assets/tank.png'; // Adjust the path according to your project structure
 import { API, graphqlOperation } from 'aws-amplify';
 import { createCarburants } from './graphql/mutations'; // Adjust the path according to your project structure
+import { Line } from 'react-chartjs-2'; // Import the Line chart component
+import { Chart, LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js'; // Import necessary components
+
+// Register the components
+Chart.register(LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend);
 
 const server_address = 'ny3.blynk.cloud';
 const token = '2h0H5T7PqqatXJrU_yIFm67xcWA8sTY9';
@@ -16,7 +21,13 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [tempLevel, setTempLevel] = useState(initialTemp);
   const [densiLevel, setDensiLevel] = useState(initialDensimetry);
+  const [historicalData, setHistoricalData] = useState({
+    temperature: [22.5, 23.0, 23.5, 24.0, 24.5], // Sample temperature data
+    densimetry: [0.45, 0.48, 0.50, 0.52, 0.55], // Sample densimetry data
+    fuelLevel: [10, 20, 30, 40, 50], // Sample fuel level data
+  }); // New state for historical data
   const navigate = useNavigate();
+  const [expandedChart, setExpandedChart] = useState(null); // State to track which chart is expanded
 
   useEffect(() => {
     fetchData();
@@ -31,8 +42,8 @@ export default function Home() {
   useEffect(() => {
     if (data) {
       saveCarburantLevelDaily();
-      console.log(data)
-
+      updateHistoricalData(); // Update historical data when new data is fetched
+      console.log(data);
     }
   }, [data]);
 
@@ -98,41 +109,121 @@ export default function Home() {
     }
   };
 
+  const updateHistoricalData = () => {
+    setHistoricalData(prev => ({
+      temperature: [...prev.temperature, tempLevel],
+      densimetry: [...prev.densimetry, densiLevel],
+      fuelLevel: [...prev.fuelLevel, FuelLevel], // Track fuel levels
+    }));
+  };
+
+  const toggleChartSize = (chart) => {
+    setExpandedChart(expandedChart === chart ? null : chart); // Toggle the expanded chart
+  };
+
   return (
-    <div className="min-h-screen bg-gray-200 flex items-center justify-center">
-      <div className="flex w-full max-w-6xl space-x-4">
-        <div className="w-1/3 bg-white rounded-lg shadow-lg overflow-hidden p-4 relative flex justify-center items-center">
-          <div className="bg-green-500 absolute bottom-0 w-full" style={{ height: `${0 * 100}%` }} />
-          <p className="text-center absolute w-full bottom-0 p-6 bg-white bg-opacity-50 text-2xl font-bold cursor-pointer">
-            Densimetry: {0}
-          </p>
-        </div>
-        <div className="flex flex-col items-center justify-center w-2/3 space-y-4">
-          <div className="w-full bg-white rounded-lg shadow-lg overflow-hidden">
-            <h1 className="text-2xl font-bold p-4">Fuel, Temperature</h1>
-            <div className="flex justify-around p-4">
-              <div className="w-1/2 bg-gray-300 h-64 relative mr-2" onClick={() => navigate('/carburants')}>
-                <div className="bg-blue-500 absolute bottom-0" style={{ height: `${FuelLevel}%`, width: '100%' }} />
-                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Fuel Level:{(FuelLevel.toFixed(2) / 100 * 19.23).toFixed(3)}
-                </p>
-              </div>
-              <div className="w-1/2 bg-gray-300 h-64 relative mx-2">
-                <div className="bg-red-500 absolute bottom-0" style={{ height: `${tempLevel}%`, width: '100%' }} />
-                <p className="text-center absolute w-full bottom-0 p-4 bg-white bg-opacity-50">Temperature: {tempLevel}°C</p>
-              </div>
+    <div className={`min-h-screen bg-gray-100 flex flex-col ${expandedChart ? 'overflow-hidden' : ''}`}>
+      {/* Header */}
+      <header className="bg-blue-600 text-white p-4 text-center">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <p className="text-sm">Monitoring Temperature, Densimetry, and Fuel Levels</p>
+      </header>
+      <div className={`flex-grow p-4 transition-all duration-300 ${expandedChart ? 'hidden' : 'flex justify-center items-center'}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full max-w-6xl mx-auto">
+          {['temperature', 'densimetry', 'fuelLevel'].map((chart, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-lg p-4 transition-transform transform hover:scale-105"
+              onClick={() => toggleChartSize(chart)}
+            >
+              <h2 className="text-xl font-bold mb-2">{`${chart.charAt(0).toUpperCase()}${chart.slice(1)} Over Time`}</h2>
+              <Line
+                data={{
+                  labels: historicalData[chart].map((_, i) => i + 1),
+                  datasets: [
+                    {
+                      label:
+                        chart === 'temperature'
+                          ? 'Temperature (°C)'
+                          : chart === 'densimetry'
+                          ? 'Densimetry (g/cm³)'
+                          : 'Fuel Level (L)',
+                      data: historicalData[chart],
+                      borderColor: chart === 'temperature' ? 'rgba(255, 99, 132, 1)' : chart === 'densimetry' ? 'rgba(54, 162, 235, 1)' : 'rgba(75, 192, 192, 1)',
+                      backgroundColor: chart === 'temperature' ? 'rgba(255, 99, 132, 0.2)' : chart === 'densimetry' ? 'rgba(54, 162, 235, 0.2)' : 'rgba(75, 192, 192, 0.2)',
+                      fill: true,
+                    },
+                  ],
+                }}
+                options={{
+                  responsive: true,
+                  plugins: {
+                    legend: { display: true },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.raw}` } },
+                  },
+                  scales: { y: { beginAtZero: true } },
+                }}
+              />
             </div>
-          </div>
-          <div className="relative w-full h-64">
-            <img src={tankImage} alt="Tank" className="w-full h-full object-contain" />
-          </div>
-          <button
-            onClick={handleGpsButtonClick}
-            className="mt-4 px-6 py-2 bg-blue-500 text-white font-bold rounded hover:bg-blue-600"
-          >
-            Open in Google Maps
-          </button>
+          ))}
         </div>
       </div>
+
+
+      {expandedChart && (
+        <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-4 w-full max-w-4xl relative">
+            {/* Close Button */}
+            <button
+              className="absolute top-4 right-4 bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded"
+              onClick={() => setExpandedChart(null)}
+            >
+              Close
+            </button>
+            <h2 className="text-xl font-bold mb-2">
+              {expandedChart.charAt(0).toUpperCase() + expandedChart.slice(1)} Over Time
+            </h2>
+            <Line
+              data={{
+                labels: historicalData[expandedChart].map((_, i) => i + 1),
+                datasets: [
+                  {
+                    label: expandedChart === 'temperature' 
+                      ? 'Temperature (°C)' 
+                      : expandedChart === 'densimetry' 
+                      ? 'Densimetry (g/cm³)' 
+                      : 'Fuel Level (L)',
+                    data: historicalData[expandedChart],
+                    borderColor: expandedChart === 'temperature' 
+                      ? 'rgba(255, 99, 132, 1)' 
+                      : expandedChart === 'densimetry' 
+                      ? 'rgba(54, 162, 235, 1)' 
+                      : 'rgba(75, 192, 192, 1)',
+                    backgroundColor: expandedChart === 'temperature' 
+                      ? 'rgba(255, 99, 132, 0.2)' 
+                      : expandedChart === 'densimetry' 
+                      ? 'rgba(54, 162, 235, 0.2)' 
+                      : 'rgba(75, 192, 192, 0.2)',
+                    fill: true,
+                  },
+                ],
+              }}
+              options={{
+                responsive: true,
+                plugins: { legend: { display: true } },
+                scales: { y: { beginAtZero: true } },
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+
+
+      {/* Footer */}
+      <footer className="bg-gray-800 text-white p-4 text-center">
+        <p className="text-sm">© 2023 Your Company. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

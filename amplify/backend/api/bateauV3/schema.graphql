@@ -1,0 +1,4 @@
+type Carburants @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  level: Int
+}
