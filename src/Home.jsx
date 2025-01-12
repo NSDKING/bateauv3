@@ -4,9 +4,10 @@ import axios from 'axios';
 import tankImage from './assets/tank.png'; // Adjust the path according to your project structure
 import { API, graphqlOperation } from 'aws-amplify';
 import { createCarburants } from './graphql/mutations'; // Adjust the path according to your project structure
+import { listCarburants } from './graphql/queries'; // Adjust the path according to your project structure
 import { Line } from 'react-chartjs-2'; // Import the Line chart component
 import { Chart, LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend } from 'chart.js'; // Import necessary components
-
+ 
 // Register the components
 Chart.register(LinearScale, CategoryScale, PointElement, LineElement, Tooltip, Legend);
 
@@ -18,6 +19,8 @@ const initialDensimetry = 0.5; // Initial densimetry level
 
 export default function Home() {
   const [data, setData] = useState(null);
+  const [SavedData, setSavedData] = useState(null);
+  const [mostRecentLevel, setMostRecentLevel] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [tempLevel, setTempLevel] = useState(initialTemp);
   const [densiLevel, setDensiLevel] = useState(initialDensimetry);
@@ -31,6 +34,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchData();
+    fetchCarburantList();
     const tempInterval = setInterval(updateTemperature, 4000); // Update temperature every 4 seconds
     const densiInterval = setInterval(updateDensimetry, 4000); // Update densimetry every 4 seconds
     return () => {
@@ -41,17 +45,33 @@ export default function Home() {
 
   useEffect(() => {
     if (data) {
-      saveCarburantLevelDaily();
+      saveCarburantLevel();
       updateHistoricalData(); // Update historical data when new data is fetched
       console.log(data);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (SavedData && Array.isArray(SavedData)) {
+      // Sort the data by createdAt in descending order
+      const sortedData = [...SavedData].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      );
+  
+      // Get the level of the most recent carburant
+      if (sortedData.length > 0) {
+        setMostRecentLevel(sortedData[0].level);
+      }
+    }
+  }, [SavedData]);
 
   const fetchData = async () => {
     try {
       const apiEndpoint = `https://${server_address}/external/api/getAll?token=${token}`;
       const response = await axios.get(apiEndpoint);
       setData(response.data);
+
+
       setIsLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error.message);
@@ -82,32 +102,44 @@ export default function Home() {
     });
   };
 
-  const saveCarburantLevelDaily = async () => {
-    const currentDate = new Date().toISOString().split('T')[0];  
+  const fetchCarburantList = async () => {
+    try {
+      const response = await API.graphql(graphqlOperation(listCarburants));
+      setSavedData(response.data.listCarburants.items);
+    } catch (e) {
+      console.error(e);
+    }  
+  };
+  
+  const saveCarburantLevel = async () => {
     const savedData = JSON.parse(localStorage.getItem('carburantLevels')) || [];
-     // Check if we have already saved data for the current date
-    const alreadySaved = savedData.some(entry => entry.date === currentDate);
-
-    if (!alreadySaved) {
-      const newEntry = { level: FuelLevel };
+  
+    // Only save if the FuelLevel has changed
+    if (mostRecentLevel !== FuelLevel) {
+      // Save locally
+      const newEntry = { level: FuelLevel };  
       savedData.push(newEntry);
       localStorage.setItem('carburantLevels', JSON.stringify(savedData));
-      console.log('Carburant level saved:', newEntry);
-      console.log('start')
-
+      console.log('Carburant level saved locally:', newEntry);
+  
       // Save to backend
       try {
-        const result = await API.graphql(graphqlOperation(createCarburants, {
-          input: {
-            level: FuelLevel,
-           }
-        }));
+        const result = await API.graphql(
+          graphqlOperation(createCarburants, {
+            input: {
+              level: FuelLevel, // The backend will automatically add the createdAt timestamp
+            },
+          })
+        );
         console.log('Carburant level saved to backend:', result);
       } catch (error) {
         console.error('Error saving carburant level to backend:', error.message);
       }
+    } else {
+      console.log('Fuel level is unchanged. No new entry saved.');
     }
   };
+  
 
   const updateHistoricalData = () => {
     setHistoricalData(prev => ({
